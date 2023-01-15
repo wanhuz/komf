@@ -5,7 +5,7 @@ import org.snd.metadata.MetadataProvider
 import org.snd.metadata.NameSimilarityMatcher
 import org.snd.metadata.model.Image
 import org.snd.metadata.model.Provider
-import org.snd.metadata.model.Provider.BOOK_WALKER
+import org.snd.metadata.model.Provider.BOOK_WALKER_JP
 import org.snd.metadata.model.ProviderBookId
 import org.snd.metadata.model.ProviderBookMetadata
 import org.snd.metadata.model.ProviderSeriesId
@@ -23,7 +23,7 @@ class BookWalkerJpMetadataProvider(
     private val metadataMapper: BookWalkerJpMapper,
     private val nameMatcher: NameSimilarityMatcher,
 ) : MetadataProvider {
-    override fun providerName(): Provider = BOOK_WALKER
+    override fun providerName(): Provider = BOOK_WALKER_JP
 
     override fun getSeriesMetadata(seriesId: ProviderSeriesId): ProviderSeriesMetadata {
         val books = getAllBooks(BookWalkerJpSeriesId(seriesId.id))

@@ -103,6 +103,9 @@ data class MetadataProvidersConfig(
 
     @Deprecated("moved to default providers config")
     @EncodeDefault(NEVER) val bookWalker: ProviderConfig? = null,
+
+    @Deprecated("moved to default providers config")
+    @EncodeDefault(NEVER) val bookWalkerJp: ProviderConfig? = null,
 )
 
 @Serializable
@@ -115,6 +118,7 @@ data class ProvidersConfig(
     val kodansha: ProviderConfig = ProviderConfig(),
     val viz: ProviderConfig = ProviderConfig(),
     val bookWalker: ProviderConfig = ProviderConfig(),
+    val bookWalkerJp: ProviderConfig = ProviderConfig(),
 )
 
 @Serializable

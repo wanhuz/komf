@@ -1,6 +1,6 @@
 package org.snd.metadata.providers.bookwalkerjp.model
 
-import org.snd.metadata.model.Provider.BOOK_WALKER
+import org.snd.metadata.model.Provider.BOOK_WALKER_JP
 import org.snd.metadata.model.SeriesSearchResult
 
 data class BookWalkerJpSearchResult(
@@ -14,7 +14,7 @@ fun BookWalkerJpSearchResult.toSeriesSearchResult(seriesId: BookWalkerJpSeriesId
     return SeriesSearchResult(
         imageUrl = imageUrl,
         title = seriesName,
-        provider = BOOK_WALKER,
+        provider = BOOK_WALKER_JP,
         resultId = seriesId.id
     )
 }

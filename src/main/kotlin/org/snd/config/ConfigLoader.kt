@@ -89,6 +89,7 @@ class ConfigLoader {
         val kodansha = config.metadataProviders.kodansha
         val viz = config.metadataProviders.viz
         val bookWalker = config.metadataProviders.bookWalker
+        val bookWalkerJp = config.metadataProviders.bookWalkerJp
 
         warnAboutDeprecatedOptions(config)
 
@@ -104,6 +105,7 @@ class ConfigLoader {
                     kodansha = kodansha ?: defaultProviders.kodansha,
                     viz = viz ?: defaultProviders.viz,
                     bookWalker = bookWalker ?: defaultProviders.bookWalker,
+                    bookWalkerJp = bookWalkerJp ?: defaultProviders.bookWalkerJp,
                 )
             ),
         )
@@ -120,6 +122,7 @@ class ConfigLoader {
             config.metadataProviders.kodansha?.let { "metadataProviders.kodansha" },
             config.metadataProviders.viz?.let { "metadataProviders.viz" },
             config.metadataProviders.bookWalker?.let { "metadataProviders.bookWalker" },
+            config.metadataProviders.bookWalkerJp?.let { "metadataProviders.bookWalkerJp" },
         )
         if (deprecatedOptions.isNotEmpty()) {
             logger.warn {
@@ -139,6 +142,7 @@ class ConfigLoader {
             config.metadataProviders.defaultProviders.kodansha.enabled.not() &&
             config.metadataProviders.defaultProviders.viz.enabled.not() &&
             config.metadataProviders.defaultProviders.bookWalker.enabled.not() &&
+            config.metadataProviders.defaultProviders.bookWalkerJp.enabled.not() &&
             config.metadataProviders.libraryProviders.isEmpty()
         ) {
             logger.warn { "No metadata providers enabled. You will not be able to get new metadata" }

@@ -63,6 +63,7 @@ class MetadataModule(
     private val kodanshaClient = createKodanshaClient()
     private val vizClient = createVizClient()
     private val bookWalkerClient = createBookWalkerClient()
+    private val bookWalkerJpClient = createBookWalkerJpClient()
 
     val metadataProviders = createMetadataProviders(config)
 
@@ -92,6 +93,8 @@ class MetadataModule(
         vizPriority = config.viz.priority,
         bookwalker = createBookWalkerMetadataProvider(config.bookWalker, bookWalkerClient),
         bookwalkerPriority = config.bookWalker.priority,
+        bookwalkerJp = createBookWalkerJpMetadataProvider(config.bookWalkerJp, bookWalkerJpClient),
+        bookwalkerJpPriority = config.bookWalkerJp.priority,
     )
 
     private fun createComicInfoWriter() = ComicInfoWriter()
@@ -238,6 +241,23 @@ class MetadataModule(
         )
     }
 
+    private fun createBookWalkerJpClient(): BookWalkerJpClient {
+        return BookWalkerJpClient(
+            createHttpClient(
+                name = "BookWalkerJp",
+                rateLimitConfig = RateLimiterConfig.custom()
+                    .limitRefreshPeriod(Duration.ofSeconds(5))
+                    .limitForPeriod(5)
+                    .timeoutDuration(Duration.ofSeconds(5))
+                    .build(),
+                retryConfig = RetryConfig.custom<Any>()
+                    .ignoreExceptions(HttpException.NotFound::class.java)
+                    .intervalFunction { 5000 }
+                    .build()
+            )
+        )
+    }
+
 
     private fun createMalMetadataProvider(
         config: ProviderConfig,
@@ -369,7 +389,10 @@ class MetadataModule(
         private val vizPriority: Int,
 
         private val bookwalker: BookWalkerMetadataProvider?,
-        private val bookwalkerPriority: Int
+        private val bookwalkerPriority: Int,
+
+        private val bookwalkerJp: BookWalkerJpMetadataProvider?,
+        private val bookwalkerJpPriority: Int
     ) {
 
         val providers = listOfNotNull(
@@ -380,7 +403,8 @@ class MetadataModule(
             yenPress?.let { it to yenPressPriority },
             kodansha?.let { it to kodanshaPriority },
             viz?.let { it to vizPriority },
-            bookwalker?.let { it to bookwalkerPriority }
+            bookwalker?.let { it to bookwalkerPriority },
+            bookwalkerJp?.let { it to bookwalkerJpPriority }
         )
             .sortedBy { (_, priority) -> priority }
             .toMap()
@@ -396,6 +420,7 @@ class MetadataModule(
                 Provider.KODANSHA -> kodansha
                 Provider.VIZ -> viz
                 Provider.BOOK_WALKER -> bookwalker
+                Provider.BOOK_WALKER_JP -> bookwalkerJp
             }
         }
     }
