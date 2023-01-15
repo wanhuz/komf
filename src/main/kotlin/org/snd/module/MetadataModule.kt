@@ -22,6 +22,9 @@ import org.snd.metadata.providers.anilist.AniListMetadataProvider
 import org.snd.metadata.providers.bookwalker.BookWalkerClient
 import org.snd.metadata.providers.bookwalker.BookWalkerMapper
 import org.snd.metadata.providers.bookwalker.BookWalkerMetadataProvider
+import org.snd.metadata.providers.bookwalkerjp.BookWalkerJpClient
+import org.snd.metadata.providers.bookwalkerjp.BookWalkerJpMapper
+import org.snd.metadata.providers.bookwalkerjp.BookWalkerJpMetadataProvider
 import org.snd.metadata.providers.kodansha.KodanshaClient
 import org.snd.metadata.providers.kodansha.KodanshaMetadataMapper
 import org.snd.metadata.providers.kodansha.KodanshaMetadataProvider
@@ -317,6 +320,16 @@ class MetadataModule(
             ?.let { NameSimilarityMatcher.getInstance(it) } ?: nameSimilarityMatcher
 
         return BookWalkerMetadataProvider(client, bookWalkerMapper, similarityMatcher)
+    }
+
+    private fun createBookWalkerJpMetadataProvider(config: ProviderConfig, client: BookWalkerJpClient): BookWalkerJpMetadataProvider? {
+        if (config.enabled.not()) return null
+
+        val bookWalkerJpMapper = BookWalkerJpMapper(config.seriesMetadata, config.bookMetadata)
+        val similarityMatcher = config.nameMatchingMode
+            ?.let { NameSimilarityMatcher.getInstance(it) } ?: nameSimilarityMatcher
+
+        return BookWalkerJpMetadataProvider(client, bookWalkerJpMapper, similarityMatcher)
     }
 
     class MetadataProviders(
