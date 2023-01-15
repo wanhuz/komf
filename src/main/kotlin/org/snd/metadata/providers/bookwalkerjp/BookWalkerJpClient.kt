@@ -15,7 +15,7 @@ import org.snd.metadata.providers.bookwalkerjp.model.BookWalkerJpSeriesId
 class BookWalkerJpClient(
     private val client: HttpClient
 ) {
-    private val baseUrl: HttpUrl = "https://global.bookwalker.jp/".toHttpUrl()
+    private val baseUrl: HttpUrl = "https://bookwalker.jp/".toHttpUrl()
     private val parser = BookWalkerJpParser()
 
     fun searchSeries(name: String): Collection<BookWalkerJpSearchResult> {

@@ -21,6 +21,8 @@ class BookWalkerParser {
 
     fun parseSearchResults(results: String): Collection<BookWalkerSearchResult> {
         val document = Jsoup.parse(results)
+
+        println("Bookwalker")
         return document.getElementsByClass("o-tile-list").first()?.children()
             ?.map { parseSearchResult(it) }
             ?: emptyList()

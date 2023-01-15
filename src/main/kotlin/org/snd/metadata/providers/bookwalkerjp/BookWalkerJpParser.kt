@@ -17,11 +17,12 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 
 class BookWalkerJpParser {
-    private val baseUrl = "https://global.bookwalker.jp"
+    private val baseUrl = "https://bookwalker.jp"
 
     fun parseSearchResults(results: String): Collection<BookWalkerJpSearchResult> {
-        val document = Jsoup.parse(results)
-        return document.getElementsByClass("o-tile-list").first()?.children()
+        val document = Jsoup.parse(results, baseUrl)
+
+        return document.getElementsByClass("m-tile-list").first()?.children()
             ?.map { parseSearchResult(it) }
             ?: emptyList()
     }
@@ -96,14 +97,14 @@ class BookWalkerJpParser {
 
     private fun parseSearchResult(result: Element): BookWalkerJpSearchResult {
         val imageUrl = getSearchResultThumbnail(result)
-        val titleElement = result.getElementsByClass("a-tile-ttl").first()!!
+        val titleElement = result.getElementsByClass("m-book-item__title").first()!!
         val resultUrl = titleElement.child(0).attr("href")
 
         return BookWalkerJpSearchResult(
-            seriesId = parseSeriesId(resultUrl),
-            bookId = parseBookId(resultUrl),
-            seriesName = parseSeriesName(titleElement.text()),
-            imageUrl = imageUrl,
+            seriesId = parseSeriesId(resultUrl), //Done
+            bookId = parseBookId(resultUrl), //Done
+            seriesName = parseSeriesName(titleElement.text()), //Done
+            imageUrl = imageUrl, //Done
         )
     }
 
@@ -118,6 +119,7 @@ class BookWalkerJpParser {
     private fun parseBookId(url: String): BookWalkerJpBookId {
         return url.removePrefix("$baseUrl/")
             .replace("/.*/$".toRegex(), "")
+            .replace("/", "")
             .let { BookWalkerJpBookId(URLDecoder.decode(it, "UTF-8")) }
     }
 
@@ -126,10 +128,9 @@ class BookWalkerJpParser {
     }
 
     private fun getSearchResultThumbnail(result: Element): String? {
-        return result.getElementsByClass("a-tile-thumb-img").first()
-            ?.child(0)?.attr("data-srcset")
-            ?.split(",")?.get(1)
-            ?.removeSuffix(" 2x")
+
+        return result.getElementsByClass("m-thumb__image").first()
+            ?.child(0)?.attr("data-original")
     }
 
     private fun parseDocumentBookId(document: Document): BookWalkerJpBookId {
