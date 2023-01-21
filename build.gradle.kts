@@ -28,6 +28,7 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp-sse:4.10.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
     implementation("com.squareup.moshi:moshi:1.14.0")
+    implementation("junit:junit:4.13.1")
     ksp("com.squareup.moshi:moshi-kotlin-codegen:1.14.0")
     implementation("com.apollographql.apollo3:apollo-runtime")
 

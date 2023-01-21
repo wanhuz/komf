@@ -43,6 +43,7 @@ class BookWalkerParser {
     fun parseBook(book: String): BookWalkerBook {
         val document = Jsoup.parse(book)
         val synopsis = document.getElementsByClass("synopsis-text").first()?.wholeText()?.trim()?.replace("\n\n", "\n")
+        println(synopsis)
         val image = document.getElementsByClass("book-img").first()?.firstElementChild()?.firstElementChild()?.attr("src")
         val name = document.getElementsByClass("detail-book-title").first()!!.child(0).textNodes().first().text()
         val productDetail = document.getElementsByClass("product-detail").first()!!.child(0)
@@ -68,6 +69,7 @@ class BookWalkerParser {
             ?.child(1)?.text()?.split("/")?.first()
             ?.replace("\\(.*\\) PT ".toRegex(), "")?.trim()
             ?.let { LocalDate.parse(it, DateTimeFormatter.ofPattern("MMMM dd, yyyy", Locale.ENGLISH)) }
+
 
         return BookWalkerBook(
             id = parseDocumentBookId(document),

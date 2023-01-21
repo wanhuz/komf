@@ -37,7 +37,7 @@ class BookWalkerJpClient(
 
     fun getSeriesBooks(id: BookWalkerJpSeriesId, page: Int): BookWalkerJpBookListPage {
         val request = Request.Builder().url(
-            baseUrl.newBuilder().addPathSegments("series/${id.id}")
+            baseUrl.newBuilder().addPathSegments("series/${id.id}/list")
                 .addQueryParameter("page", page.toString())
                 .build()
         ).build()

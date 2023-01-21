@@ -29,11 +29,11 @@ class BookWalkerJpParser {
 
     fun parseSeriesBooks(seriesBooks: String): BookWalkerJpBookListPage {
         val document = Jsoup.parse(seriesBooks)
-        val books = document.getElementsByClass("o-tile-list").first()?.children()
+        val books = document.getElementsByClass("m-tile-list").first()?.children()
             ?.map { parseSeriesBook(it) }
             ?: emptyList()
-        val pageElement = document.getElementsByClass("pager-area").firstOrNull()?.child(0)
-        val currentPage = pageElement?.children()?.first { it.className() == "on" }
+        val pageElement = document.getElementsByClass("o-pager-box").firstOrNull()?.child(0)
+        val currentPage = pageElement?.children()?.first { it.className() == "o-pager-box-num__current" }
             ?.text()?.toInt() ?: 1
         val totalPages = pageElement?.children()?.mapNotNull { it.text().toIntOrNull() }?.max() ?: 1
         return BookWalkerJpBookListPage(page = currentPage, totalPages = totalPages, books = books)
@@ -41,33 +41,29 @@ class BookWalkerJpParser {
 
     fun parseBook(book: String): BookWalkerJpBook {
         val document = Jsoup.parse(book)
-        val synopsis = document.getElementsByClass("synopsis-text").first()?.wholeText()?.trim()?.replace("\n\n", "\n")
-        val image = document.getElementsByClass("book-img").first()?.firstElementChild()?.firstElementChild()?.attr("src")
-        val name = document.getElementsByClass("detail-book-title").first()!!.child(0).textNodes().first().text()
-        val productDetail = document.getElementsByClass("product-detail").first()!!.child(0)
-        val seriesTitleElement = productDetail.children()
-            .first { it.child(0).text() == "Series Title" }
-            .child(1)
-        val seriesTitle = parseSeriesName(seriesTitleElement.text())
+        val synopsis = document.getElementsByClass("p-summary__text").first()?.wholeText()?.trim()?.replace("\n\n", "\n")
+        val image = document.getElementsByClass("p-main__thumb").first()?.firstElementChild()?.child(1)?.firstElementChild()?.attr("data-original")
+        val name = document.getElementsByClass("p-main__title").text()
+            .replace("【.*】".toRegex(), "")
+        val productDetail = document.getElementsByClass("p-information__data")
+        val seriesTitleElement = productDetail.select("dt:contains(シリーズ) + dd").first()!!.child(0)
+        val seriesTitle = seriesTitleElement.text()
+            .replace("【.*】".toRegex(), "")
+            .replace("（.*）".toRegex(), "")
         val seriesId = seriesTitleElement.getElementsByTag("a").first()?.attr("href")?.let { parseSeriesId(it) }
-        val japaneseTitles = productDetail.children().firstOrNull { it.child(0).text() == "Japanese Title" }
-            ?.child(1)?.child(0)?.child(0)
-        val japaneseTitle = japaneseTitles?.textNodes()?.firstOrNull()?.text()?.removeSuffix(" (")
-        val romajiTitle = japaneseTitles?.getElementsByClass("product-detail-romaji")?.first()?.text()?.removeSuffix(")")
-        val authors = productDetail.children().firstOrNull { it.child(0).text() == "Author" || it.child(0).text() == "By (author)" }
-            ?.child(1)?.children()?.map { it.text() } ?: emptyList()
-        val artists = productDetail.children().firstOrNull { it.child(0).text() == "Artist" || it.child(0).text() == "By (artist)" }
-            ?.child(1)?.children()?.map { it.text() } ?: authors
-        val publisher = productDetail.children().first { it.child(0).text() == "Publisher" }
-            .child(1).text()
-        val genres = productDetail.children().firstOrNull { it.child(0).text() == "Genre" }
-            ?.child(1)?.child(0)?.children()?.map { it.text() }
-            ?: emptyList()
-        val availableSince = productDetail.children().firstOrNull { it.child(0).text() == "Available since" }
-            ?.child(1)?.text()?.split("/")?.first()
-            ?.replace("\\(.*\\) PT ".toRegex(), "")?.trim()
-            ?.let { LocalDate.parse(it, DateTimeFormatter.ofPattern("MMMM dd, yyyy", Locale.ENGLISH)) }
-
+        val japaneseTitles = null
+        val japaneseTitle = seriesTitle
+        val romajiTitle = null
+        val authorDetail = productDetail.select("dt:contains(著者) + dd").first()!!.child(0)
+        val authors = authorDetail.children().select("li:contains(著者), li:contains(原作), li:contains(著)")
+            .map {it.text().replaceAfter("(", "").replace("(", "")} ?: emptyList()
+        val artists = authorDetail.children().select("li:contains(作画), li:contains(イラスト)")
+            .map {it.text().replaceAfter("(", "").replace("(", "")} ?: emptyList()
+        val publisher = productDetail.select("dt:contains(出版社) + dd").first()?.child(0)!!.text()
+        val genres = document.getElementsByClass("m-icon-tag-list").first()?.children()?.map {it.text()} ?: emptyList()
+        val availableSince =  productDetail.select("dt:contains(配信開始日) + dd").first()?.text()
+            .let { LocalDate.parse(it, DateTimeFormatter.ofPattern("y/M/d", Locale.ENGLISH)) }
+        val testnumber = parseBookNumber(name)
         return BookWalkerJpBook(
             id = parseDocumentBookId(document),
             seriesId = seriesId,
@@ -87,7 +83,7 @@ class BookWalkerJpParser {
     }
 
     private fun parseSeriesBook(book: Element): BookWalkerJpSeriesBook {
-        val titleElement = book.getElementsByClass("a-tile-ttl").first()!!
+        val titleElement = book.getElementsByClass("m-book-item__title").first()!!
         return BookWalkerJpSeriesBook(
             id = parseBookId(titleElement.child(0).attr("href")),
             name = titleElement.text(),
@@ -101,10 +97,10 @@ class BookWalkerJpParser {
         val resultUrl = titleElement.child(0).attr("href")
 
         return BookWalkerJpSearchResult(
-            seriesId = parseSeriesId(resultUrl), //Done
-            bookId = parseBookId(resultUrl), //Done
-            seriesName = parseSeriesName(titleElement.text()), //Done
-            imageUrl = imageUrl, //Done
+            seriesId = parseSeriesId(resultUrl),
+            bookId = parseBookId(resultUrl),
+            seriesName = parseSeriesName(titleElement.text()),
+            imageUrl = imageUrl,
         )
     }
 
@@ -140,7 +136,29 @@ class BookWalkerJpParser {
 
     private fun parseBookNumber(name: String): BookRange? {
         return BookNameParser.getVolumes(name)
-            ?: "(?i)(?<!chapter)\\s\\d+".toRegex().findAll(name).lastOrNull()?.value?.toDoubleOrNull()
+            ?: "(?i)(?<!chapter)([０-９]+|\\s\\d+)".toRegex().findAll(name).lastOrNull()?.value?.let {parseJpnNumtoEngNum(it)}?.toDoubleOrNull()
                 ?.let { BookRange(it, it) }
+    }
+
+    fun parseJpnNumtoEngNum(str: String):String {
+        var result = ""
+        var en = '0'
+        for (ch in str) {
+            en = ch
+            when (ch) {
+                '０' -> en = '0'
+                '１' -> en = '1'
+                '２' -> en = '2'
+                '３' -> en = '3'
+                '４' -> en = '4'
+                '５' -> en = '5'
+                '６' -> en = '6'
+                '７' -> en = '7'
+                '８' -> en = '8'
+                '９' -> en = '9'
+            }
+            result = "${result}$en"
+        }
+        return result
     }
 }
