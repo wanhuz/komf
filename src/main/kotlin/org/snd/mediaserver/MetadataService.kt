@@ -2,14 +2,23 @@ package org.snd.mediaserver
 
 import mu.KotlinLogging
 import org.apache.commons.lang3.StringUtils
-import org.snd.mediaserver.model.*
 import org.snd.mediaserver.model.MatchType.MANUAL
+import org.snd.mediaserver.model.MediaServerBook
+import org.snd.mediaserver.model.MediaServerLibraryId
+import org.snd.mediaserver.model.MediaServerSeries
+import org.snd.mediaserver.model.MediaServerSeriesId
+import org.snd.mediaserver.model.SeriesAndBookMetadata
 import org.snd.mediaserver.repository.SeriesMatch
 import org.snd.mediaserver.repository.SeriesMatchRepository
 import org.snd.metadata.BookNameParser
 import org.snd.metadata.MetadataMerger
 import org.snd.metadata.MetadataProvider
-import org.snd.metadata.model.*
+import org.snd.metadata.model.BookMetadata
+import org.snd.metadata.model.Provider
+import org.snd.metadata.model.ProviderSeriesId
+import org.snd.metadata.model.ProviderSeriesMetadata
+import org.snd.metadata.model.SeriesBook
+import org.snd.metadata.model.SeriesSearchResult
 import org.snd.module.MetadataModule.MetadataProviders
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutorService
@@ -22,18 +31,12 @@ class MetadataService(
     private val aggregateMetadata: Boolean,
     private val executor: ExecutorService,
     private val metadataUpdateService: MetadataUpdateService,
-    private val seriesMatchRepository: SeriesMatchRepository
+    private val seriesMatchRepository: SeriesMatchRepository,
+    private val postProcessor: MetadataPostProcessor,
 ) {
-    fun availableProviders(seriesId: MediaServerSeriesId) = availableProviders(mediaServerClient.getSeries(seriesId).libraryId)
-
     fun availableProviders(libraryId: MediaServerLibraryId) = metadataProviders.providers(libraryId.id)
 
     fun availableProviders() = metadataProviders.defaultProviders()
-
-    fun searchSeriesMetadata(seriesName: String, seriesId: MediaServerSeriesId): Collection<SeriesSearchResult> {
-        val series = mediaServerClient.getSeries(seriesId)
-        return searchSeriesMetadata(seriesName, series.libraryId)
-    }
 
     fun searchSeriesMetadata(seriesName: String, libraryId: MediaServerLibraryId): Collection<SeriesSearchResult> {
         val providers = metadataProviders.providers(libraryId.id)
@@ -52,6 +55,8 @@ class MetadataService(
         edition: String?
     ) {
         val series = mediaServerClient.getSeries(seriesId)
+        val seriesTitle = series.metadata.title.ifBlank { series.name }
+        logger.info { "Setting metadata for series \"${seriesTitle}\" ${series.id} using $providerName $providerSeriesId" }
         val provider = metadataProviders.provider(series.libraryId.id, providerName) ?: throw RuntimeException()
 
         val seriesMetadata = provider.getSeriesMetadata(providerSeriesId)
@@ -66,7 +71,7 @@ class MetadataService(
             )
         } else SeriesAndBookMetadata(seriesMetadata.metadata, bookMetadata)
 
-        metadataUpdateService.updateMetadata(series, metadata)
+        metadataUpdateService.updateMetadata(series, postProcessor.process(metadata))
         seriesMatchRepository.save(
             SeriesMatch(
                 seriesId = series.id,
@@ -76,6 +81,7 @@ class MetadataService(
                 edition = edition
             )
         )
+        logger.info { "finished metadata update of series \"${seriesTitle}\" ${series.id}" }
     }
 
     fun matchLibraryMetadata(libraryId: MediaServerLibraryId) {
@@ -132,7 +138,7 @@ class MetadataService(
             } else metadata
         }
 
-        metadataUpdateService.updateMetadata(series, metadata)
+        metadataUpdateService.updateMetadata(series, postProcessor.process(metadata))
         logger.info { "finished metadata update of series \"${seriesTitle}\" ${series.id}" }
     }
 
@@ -167,7 +173,7 @@ class MetadataService(
             val editionName = edition.replace("(?i)\\s?[EÉ]dition\\s?".toRegex(), "").lowercase()
             return books.associateWith { book ->
                 val volume = BookNameParser.getVolumes(book.name) ?: book.number..book.number
-                editions[editionName]?.firstOrNull { volume == it.number }
+                editions[editionName]?.firstOrNull { it.number != null && volume == it.number }
             }
         }
 
@@ -179,9 +185,9 @@ class MetadataService(
         return byEdition.map { (book, edition) ->
             val volumes = BookNameParser.getVolumes(book.name)
             val matched = if (edition == null) {
-                noEditionBooks.firstOrNull { it.number == volumes }
+                noEditionBooks.firstOrNull { it.number != null && it.number == volumes }
             } else {
-                editions[edition]?.firstOrNull { it.number == volumes }
+                editions[edition]?.firstOrNull { it.number != null && it.number == volumes }
             }
             book to matched
         }.toMap()

@@ -3,12 +3,26 @@ package org.snd.metadata.providers.bookwalker
 import org.snd.config.BookMetadataConfig
 import org.snd.config.SeriesMetadataConfig
 import org.snd.metadata.MetadataConfigApplier
-import org.snd.metadata.model.*
+import org.snd.metadata.model.Author
+import org.snd.metadata.model.AuthorRole
+import org.snd.metadata.model.BookMetadata
+import org.snd.metadata.model.Image
+import org.snd.metadata.model.ProviderBookId
+import org.snd.metadata.model.ProviderBookMetadata
+import org.snd.metadata.model.ProviderSeriesId
+import org.snd.metadata.model.ProviderSeriesMetadata
+import org.snd.metadata.model.ReleaseDate
+import org.snd.metadata.model.SeriesBook
+import org.snd.metadata.model.SeriesMetadata
+import org.snd.metadata.model.SeriesTitle
 import org.snd.metadata.model.TitleType.LOCALIZED
 import org.snd.metadata.model.TitleType.NATIVE
+import org.snd.metadata.model.TitleType.ROMAJI
+import org.snd.metadata.model.WebLink
 import org.snd.metadata.providers.bookwalker.model.BookWalkerBook
 import org.snd.metadata.providers.bookwalker.model.BookWalkerSeriesBook
 import org.snd.metadata.providers.bookwalker.model.BookWalkerSeriesId
+import java.net.URLEncoder
 
 class BookWalkerMapper(
     private val seriesMetadataConfig: SeriesMetadataConfig,
@@ -29,8 +43,8 @@ class BookWalkerMapper(
         thumbnail: Image? = null
     ): ProviderSeriesMetadata {
         val titles = listOfNotNull(
-            SeriesTitle(book.seriesTitle, LOCALIZED),
-            book.romajiTitle?.let { SeriesTitle(it, LOCALIZED) },
+            book.seriesTitle?.let { SeriesTitle(it, LOCALIZED) },
+            book.romajiTitle?.let { SeriesTitle(it, ROMAJI) },
             book.japaneseTitle?.let { SeriesTitle(it, NATIVE) }
         )
 
@@ -47,6 +61,12 @@ class BookWalkerMapper(
                 year = book.availableSince?.year,
                 month = book.availableSince?.monthValue,
                 day = book.availableSince?.dayOfMonth,
+            ),
+            links = listOf(
+                WebLink(
+                    "BookWalker",
+                    bookWalkerBaseUrl + "series/${URLEncoder.encode(seriesId.id, "UTF-8")}"
+                )
             )
         )
 
@@ -76,7 +96,13 @@ class BookWalkerMapper(
             authors = getAuthors(book),
             startChapter = null,
             endChapter = null,
-            thumbnail = thumbnail
+            thumbnail = thumbnail,
+            links = listOf(
+                WebLink(
+                    "BookWalker",
+                    bookWalkerBaseUrl + URLEncoder.encode(book.id.id, "UTF-8")
+                )
+            )
         )
 
         val providerMetadata = ProviderBookMetadata(

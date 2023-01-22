@@ -4,6 +4,7 @@ import java.time.LocalDate
 
 data class SeriesMetadata(
     val status: SeriesStatus? = null,
+    val title: SeriesTitle? = null,
     val titles: Collection<SeriesTitle> = emptyList(),
     val summary: String? = null,
     val publisher: String? = null,
@@ -16,6 +17,7 @@ data class SeriesMetadata(
     val totalBookCount: Int? = null,
     val authors: List<Author> = emptyList(),
     val releaseDate: ReleaseDate? = null,
+    val links: Collection<WebLink> = emptyList(),
 
     val thumbnail: Image? = null,
 )

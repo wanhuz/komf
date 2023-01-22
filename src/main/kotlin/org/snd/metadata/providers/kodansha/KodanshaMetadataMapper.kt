@@ -15,11 +15,13 @@ import org.snd.metadata.model.SeriesMetadata
 import org.snd.metadata.model.SeriesStatus
 import org.snd.metadata.model.SeriesTitle
 import org.snd.metadata.model.TitleType
+import org.snd.metadata.model.WebLink
 import org.snd.metadata.providers.kodansha.model.KodanshaBook
 import org.snd.metadata.providers.kodansha.model.KodanshaSeries
 import org.snd.metadata.providers.kodansha.model.Status.COMPLETE
 import org.snd.metadata.providers.kodansha.model.Status.COMPLETED
 import org.snd.metadata.providers.kodansha.model.Status.ONGOING
+import java.net.URLEncoder
 
 class KodanshaMetadataMapper(
     private val seriesMetadataConfig: SeriesMetadataConfig,
@@ -42,6 +44,12 @@ class KodanshaMetadataMapper(
             tags = series.tags,
             totalBookCount = series.books.size,
             thumbnail = thumbnail,
+            links = listOf(
+                WebLink(
+                    "Kodansha",
+                    kodanshaBaseUrl + "series/${URLEncoder.encode(series.id.id, "UTF-8")}"
+                )
+            )
         )
 
         val providerMetadata = ProviderSeriesMetadata(
@@ -68,7 +76,8 @@ class KodanshaMetadataMapper(
             releaseDate = book.ebookReleaseDate ?: book.printReleaseDate,
             tags = book.tags.toSet(),
             isbn = book.eisbn ?: book.isbn,
-            thumbnail = thumbnail
+            thumbnail = thumbnail,
+            links = listOf(WebLink("Kodansha", kodanshaBaseUrl + "volume/${book.id}"))
         )
 
         val providerMetadata = ProviderBookMetadata(

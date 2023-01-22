@@ -63,7 +63,6 @@ class BookWalkerJpParser {
         val genres = document.getElementsByClass("m-icon-tag-list").first()?.children()?.map {it.text()} ?: emptyList()
         val availableSince =  productDetail.select("dt:contains(配信開始日) + dd").first()?.text()
             .let { LocalDate.parse(it, DateTimeFormatter.ofPattern("y/M/d", Locale.ENGLISH)) }
-        val testnumber = parseBookNumber(name)
         return BookWalkerJpBook(
             id = parseDocumentBookId(document),
             seriesId = seriesId,

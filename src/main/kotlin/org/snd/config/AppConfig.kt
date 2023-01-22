@@ -32,7 +32,8 @@ data class KomgaConfig(
     val eventListener: EventListenerConfig = EventListenerConfig(),
     val notifications: NotificationConfig = NotificationConfig(),
     val metadataUpdate: MetadataUpdateConfig = MetadataUpdateConfig(),
-    val aggregateMetadata: Boolean = false,
+    @Deprecated("moved to MetadataUpdateConfig")
+    @EncodeDefault(NEVER) val aggregateMetadata: Boolean? = null,
 )
 
 @Serializable
@@ -42,7 +43,8 @@ data class KavitaConfig(
     val eventListener: EventListenerConfig = EventListenerConfig(enabled = false),
     val notifications: NotificationConfig = NotificationConfig(),
     val metadataUpdate: MetadataUpdateConfig = MetadataUpdateConfig(),
-    val aggregateMetadata: Boolean = false,
+    @Deprecated("moved to MetadataUpdateConfig")
+    @EncodeDefault(NEVER) val aggregateMetadata: Boolean? = null,
 )
 
 @Serializable
@@ -52,14 +54,46 @@ data class NotificationConfig(
 
 @Serializable
 data class MetadataUpdateConfig(
-    val bookThumbnails: Boolean = false,
-    val seriesThumbnails: Boolean = true,
+    @EncodeDefault(NEVER) val default: MetadataProcessingConfig = MetadataProcessingConfig(),
+    @EncodeDefault(NEVER) val library: Map<String, MetadataProcessingConfig> = emptyMap(),
+
+    @Deprecated("moved to default processing config")
+    @EncodeDefault(NEVER) val bookThumbnails: Boolean? = null,
+    @Deprecated("moved to default processing config")
+    @EncodeDefault(NEVER) val seriesThumbnails: Boolean? = null,
+    @Deprecated("moved to default processing config")
+    @EncodeDefault(NEVER) val seriesTitle: Boolean? = null,
+    @Deprecated("moved to default processing config")
+    @EncodeDefault(NEVER) val titleType: TitleType? = null,
+    @Deprecated("moved to default processing config")
+    @EncodeDefault(NEVER) val readingDirectionValue: ReadingDirection? = null,
+    @Deprecated("moved to default processing config")
+    @EncodeDefault(NEVER) val languageValue: String? = null,
+    @Deprecated("moved to default processing config")
+    @EncodeDefault(NEVER) val orderBooks: Boolean? = null,
+    @Deprecated("moved to default processing config")
+    @EncodeDefault(NEVER) val modes: Set<UpdateMode>? = null,
+)
+
+@Serializable
+data class MetadataProcessingConfig(
+    val aggregate: Boolean = false,
+
+    val bookCovers: Boolean = false,
+    val seriesCovers: Boolean = false,
+    val updateModes: Set<UpdateMode> = setOf(API),
+
+    @EncodeDefault(NEVER) val postProcessing: MetadataPostProcessingConfig = MetadataPostProcessingConfig()
+)
+
+@Serializable
+data class MetadataPostProcessingConfig(
     val seriesTitle: Boolean = false,
     val titleType: TitleType = TitleType.LOCALIZED,
-    val readingDirectionValue: ReadingDirection? = null,
-    val languageValue: String? = null,
+    val alternativeSeriesTitles: Boolean = false,
     val orderBooks: Boolean = false,
-    val modes: Set<UpdateMode> = setOf(API),
+    @EncodeDefault(NEVER) val readingDirectionValue: ReadingDirection? = null,
+    @EncodeDefault(NEVER) val languageValue: String? = null,
 )
 
 @Serializable
@@ -76,8 +110,8 @@ data class EventListenerConfig(
 @Serializable
 data class MetadataProvidersConfig(
     @EncodeDefault(NEVER) val malClientId: String = "",
-    val nameMatchingMode: NameMatchingMode = CLOSEST_MATCH,
-    val defaultProviders: ProvidersConfig = ProvidersConfig(),
+    @EncodeDefault(NEVER) val nameMatchingMode: NameMatchingMode = CLOSEST_MATCH,
+    @EncodeDefault(NEVER) val defaultProviders: ProvidersConfig = ProvidersConfig(),
     @EncodeDefault(NEVER) val libraryProviders: Map<String, ProvidersConfig> = emptyMap(),
 
     @Deprecated("moved to default providers config")
@@ -110,23 +144,23 @@ data class MetadataProvidersConfig(
 
 @Serializable
 data class ProvidersConfig(
-    val mangaUpdates: ProviderConfig = ProviderConfig(),
-    val mal: ProviderConfig = ProviderConfig(),
-    val nautiljon: ProviderConfig = ProviderConfig(),
-    val aniList: ProviderConfig = ProviderConfig(),
-    val yenPress: ProviderConfig = ProviderConfig(),
-    val kodansha: ProviderConfig = ProviderConfig(),
-    val viz: ProviderConfig = ProviderConfig(),
-    val bookWalker: ProviderConfig = ProviderConfig(),
-    val bookWalkerJp: ProviderConfig = ProviderConfig(),
+    @EncodeDefault(NEVER) val mangaUpdates: ProviderConfig = ProviderConfig(),
+    @EncodeDefault(NEVER) val mal: ProviderConfig = ProviderConfig(),
+    @EncodeDefault(NEVER) val nautiljon: ProviderConfig = ProviderConfig(),
+    @EncodeDefault(NEVER) val aniList: ProviderConfig = ProviderConfig(),
+    @EncodeDefault(NEVER) val yenPress: ProviderConfig = ProviderConfig(),
+    @EncodeDefault(NEVER) val kodansha: ProviderConfig = ProviderConfig(),
+    @EncodeDefault(NEVER) val viz: ProviderConfig = ProviderConfig(),
+    @EncodeDefault(NEVER) val bookWalker: ProviderConfig = ProviderConfig(),
+    @EncodeDefault(NEVER) val bookWalkerJp: ProviderConfig = ProviderConfig(),
 )
 
 @Serializable
 data class ProviderConfig(
     @Deprecated("moved to separate config")
     @EncodeDefault(NEVER) val clientId: String = "",
-    val priority: Int = 10,
-    val enabled: Boolean = false,
+    @EncodeDefault(NEVER) val priority: Int = 10,
+    @EncodeDefault(NEVER) val enabled: Boolean = false,
     @EncodeDefault(NEVER) val seriesMetadata: SeriesMetadataConfig = SeriesMetadataConfig(),
     @EncodeDefault(NEVER) val bookMetadata: BookMetadataConfig = BookMetadataConfig(),
     @EncodeDefault(NEVER) val nameMatchingMode: NameMatchingMode? = null,
@@ -137,7 +171,7 @@ data class DiscordConfig(
     val webhooks: Collection<String>? = null,
     val seriesCover: Boolean = false,
     val imgurClientId: String? = null,
-    val templatesDirectory: String = "./",
+    @EncodeDefault(NEVER) val templatesDirectory: String = "./",
 )
 
 @Serializable
@@ -162,6 +196,7 @@ data class SeriesMetadataConfig(
     @EncodeDefault(NEVER) val releaseDate: Boolean = true,
     @EncodeDefault(NEVER) val thumbnail: Boolean = true,
     @EncodeDefault(NEVER) val books: Boolean = true,
+    @EncodeDefault(NEVER) val links: Boolean = true,
 
     @EncodeDefault(NEVER) val useOriginalPublisher: Boolean = false,
     @EncodeDefault(NEVER) val originalPublisherTagName: String? = null,

@@ -10,7 +10,6 @@ import okhttp3.Response
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSourceListener
 import okhttp3.sse.EventSources
-import org.snd.mediaserver.MetadataService
 import org.snd.mediaserver.NotificationService
 import org.snd.mediaserver.komga.model.event.BookEvent
 import org.snd.mediaserver.komga.model.event.SeriesEvent
@@ -20,6 +19,7 @@ import org.snd.mediaserver.model.MediaServerSeriesId
 import org.snd.mediaserver.repository.BookThumbnailsRepository
 import org.snd.mediaserver.repository.SeriesMatchRepository
 import org.snd.mediaserver.repository.SeriesThumbnailsRepository
+import org.snd.module.MediaServerModule.MetadataServiceProvider
 import java.util.concurrent.ExecutorService
 import java.util.function.Predicate
 
@@ -30,7 +30,7 @@ class KomgaEventListener(
     private val moshi: Moshi,
     private val komgaUrl: HttpUrl,
 
-    private val metadataService: MetadataService,
+    private val metadataServiceProvider: MetadataServiceProvider,
     private val bookThumbnailsRepository: BookThumbnailsRepository,
     private val seriesThumbnailsRepository: SeriesThumbnailsRepository,
     private val seriesMatchRepository: SeriesMatchRepository,
@@ -48,23 +48,23 @@ class KomgaEventListener(
     private var isActive: Boolean = false
 
     fun start() {
+        isActive = true
         val request = Request.Builder()
             .url(komgaUrl.newBuilder().addPathSegments("sse/v1/events").build())
             .build()
         this.eventSource = EventSources.createFactory(client).newEventSource(request, this)
-        isActive = true
     }
 
     @Synchronized
     fun stop() {
-        eventSource?.cancel()
         isActive = false
+        eventSource?.cancel()
     }
 
     override fun onClosed(eventSource: EventSource) {
         logger.debug { "event source closed $eventSource" }
         if (isActive) {
-            start()
+            reconnect()
         }
     }
 
@@ -103,7 +103,6 @@ class KomgaEventListener(
             "TaskQueueStatus" -> {
                 val event = moshi.adapter<TaskQueueStatusEvent>().fromJson(data) ?: throw RuntimeException()
                 if (event.count == 0) {
-                    val events = bookAddedEvents.groupBy({ MediaServerSeriesId(it.seriesId) }, { MediaServerBookId(it.bookId) })
 
                     bookDeletedEvents.forEach { book ->
                         bookThumbnailsRepository.delete(MediaServerBookId(book.bookId))
@@ -113,7 +112,11 @@ class KomgaEventListener(
                         seriesMatchRepository.delete(MediaServerSeriesId(series.seriesId))
                     }
 
-                    executor.execute { processEvents(events.toMap()) }
+                    bookAddedEvents.groupBy { it.libraryId }
+                        .forEach { (libraryId, events) ->
+                            val groupedEvents = events.groupBy({ MediaServerSeriesId(it.seriesId) }, { MediaServerBookId(it.bookId) })
+                            executor.execute { processEvents(libraryId, groupedEvents) }
+                        }
 
                     bookAddedEvents.clear()
                     seriesAddedEvents.clear()
@@ -124,7 +127,8 @@ class KomgaEventListener(
         }
     }
 
-    private fun processEvents(events: Map<MediaServerSeriesId, Collection<MediaServerBookId>>) {
+    private fun processEvents(libraryId: String, events: Map<MediaServerSeriesId, Collection<MediaServerBookId>>) {
+        val metadataService = metadataServiceProvider.serviceFor(libraryId)
         events.keys.forEach { metadataService.matchSeriesMetadata(it) }
         runCatching { notificationService.executeFor(events) }
             .exceptionOrNull()?.let { logger.error(it) {} }
@@ -135,11 +139,21 @@ class KomgaEventListener(
         if (isActive) {
             logger.error(t) { "${t?.message} ${t?.cause} response code ${response?.code}" }
             Thread.sleep(10000)
-            start()
+            reconnect()
         }
     }
 
     override fun onOpen(eventSource: EventSource, response: Response) {
         logger.info { "connected to komga on $komgaUrl" }
+    }
+
+    @Synchronized
+    private fun reconnect() {
+        if (isActive) {
+            val request = Request.Builder()
+                .url(komgaUrl.newBuilder().addPathSegments("sse/v1/events").build())
+                .build()
+            this.eventSource = EventSources.createFactory(client).newEventSource(request, this)
+        }
     }
 }

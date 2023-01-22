@@ -1,4 +1,4 @@
-package org.snd.api
+package org.snd.api.dto
 
 import com.squareup.moshi.JsonClass
 import org.snd.mediaserver.UpdateMode
@@ -8,94 +8,106 @@ import org.snd.metadata.model.TitleType
 import kotlin.properties.Delegates
 
 @JsonClass(generateAdapter = true)
-data class AppConfigDto(
-    val komga: KomgaConfigDto? = null,
-    val kavita: KavitaConfigDto? = null,
-    val discord: DiscordConfigDto? = null,
-    val metadataProviders: MetadataProvidersConfigDto? = null,
+data class AppConfigUpdateDto(
+    val komga: KomgaConfigUpdateDto? = null,
+    val kavita: KavitaConfigUpdateDto? = null,
+    val discord: DiscordConfigUpdateDto? = null,
+    val metadataProviders: MetadataProvidersConfigUpdateDto? = null,
 )
 
 @JsonClass(generateAdapter = true)
-data class KomgaConfigDto(
+data class KomgaConfigUpdateDto(
     val baseUri: String? = null,
     val komgaUser: String? = null,
     val komgaPassword: String? = null,
-    val eventListener: EventListenerConfigDto? = null,
-    val notifications: NotificationConfigDto? = null,
-    val metadataUpdate: MetadataUpdateConfigDto? = null,
-    val aggregateMetadata: Boolean? = null,
+    val eventListener: EventListenerConfigUpdateDto? = null,
+    val notifications: NotificationConfigUpdateDto? = null,
+    val metadataUpdate: MetadataUpdateConfigUpdateDto? = null,
 )
 
 @JsonClass(generateAdapter = true)
-data class KavitaConfigDto(
+data class KavitaConfigUpdateDto(
     val baseUri: String? = null,
     val apiKey: String? = null,
-    val eventListener: EventListenerConfigDto? = null,
-    val notifications: NotificationConfigDto? = null,
-    val metadataUpdate: MetadataUpdateConfigDto? = null,
-    val aggregateMetadata: Boolean? = null,
+    val eventListener: EventListenerConfigUpdateDto? = null,
+    val notifications: NotificationConfigUpdateDto? = null,
+    val metadataUpdate: MetadataUpdateConfigUpdateDto? = null,
 )
 
 @JsonClass(generateAdapter = true)
-data class NotificationConfigDto(
+data class NotificationConfigUpdateDto(
     val libraries: Collection<String>? = null
 )
 
 @JsonClass(generateAdapter = true)
-class MetadataUpdateConfigDto {
+data class MetadataUpdateConfigUpdateDto(
+    val default: MetadataProcessingConfigUpdateDto? = null,
+    val library: Map<String, MetadataProcessingConfigUpdateDto>? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class MetadataProcessingConfigUpdateDto(
+    val aggregate: Boolean? = null,
+    val bookCovers: Boolean? = null,
+    val seriesCovers: Boolean? = null,
+    val updateModes: Set<UpdateMode>? = null,
+    val postProcessing: MetadataPostProcessingConfigUpdateDto? = null
+)
+
+@JsonClass(generateAdapter = true)
+class MetadataPostProcessingConfigUpdateDto {
     @Transient
     private val isSet = mutableMapOf<String, Boolean>()
     fun isSet(prop: String) = isSet.getOrDefault(prop, false)
-    var readingDirectionValue: ReadingDirection? by Delegates.observable(null) { prop, _, _ -> isSet[prop.name] = true }
-    var languageValue: String? by Delegates.observable(null) { prop, _, _ -> isSet[prop.name] = true }
 
-    var modes: Set<UpdateMode>? = null
-    var bookThumbnails: Boolean? = null
-    var seriesThumbnails: Boolean? = null
     var seriesTitle: Boolean? = null
     var titleType: TitleType? = null
     var orderBooks: Boolean? = null
+    var alternativeSeriesTitles: Boolean? = null
+
+    var readingDirectionValue: ReadingDirection? by Delegates.observable(null) { prop, _, _ -> isSet[prop.name] = true }
+    var languageValue: String? by Delegates.observable(null) { prop, _, _ -> isSet[prop.name] = true }
 }
 
 @JsonClass(generateAdapter = true)
-class DiscordConfigDto {
+class DiscordConfigUpdateDto {
     @Transient
     private val isSet = mutableMapOf<String, Boolean>()
     fun isSet(prop: String) = isSet.getOrDefault(prop, false)
 
-    var webhooks: Collection<String>? by Delegates.observable(null) { prop, _, _ -> isSet[prop.name] = true }
+    var webhooks: Map<Int, String?>? by Delegates.observable(null) { prop, _, _ -> isSet[prop.name] = true }
+    var imgurClientId: String? by Delegates.observable(null) { prop, _, _ -> isSet[prop.name] = true }
     var seriesCover: Boolean? = null
-    var imgurClientId: String? = null
 }
 
 @JsonClass(generateAdapter = true)
-data class EventListenerConfigDto(
+data class EventListenerConfigUpdateDto(
     val enabled: Boolean? = null,
     val libraries: Collection<String>? = null
 )
 
 @JsonClass(generateAdapter = true)
-data class MetadataProvidersConfigDto(
+data class MetadataProvidersConfigUpdateDto(
     val malClientId: String? = null,
     val nameMatchingMode: NameMatchingMode? = null,
-    val defaultProviders: ProvidersConfigDto? = null,
-    val libraryProviders: Map<String, ProvidersConfigDto?>? = null,
+    val defaultProviders: ProvidersConfigUpdateDto? = null,
+    val libraryProviders: Map<String, ProvidersConfigUpdateDto?>? = null,
 )
 
 @JsonClass(generateAdapter = true)
-data class ProvidersConfigDto(
-    val mangaUpdates: ProviderConfigDto? = null,
-    val mal: ProviderConfigDto? = null,
-    val nautiljon: ProviderConfigDto? = null,
-    val aniList: ProviderConfigDto? = null,
-    val yenPress: ProviderConfigDto? = null,
-    val kodansha: ProviderConfigDto? = null,
-    val viz: ProviderConfigDto? = null,
-    val bookWalker: ProviderConfigDto? = null,
+data class ProvidersConfigUpdateDto(
+    val mangaUpdates: ProviderConfigUpdateDto? = null,
+    val mal: ProviderConfigUpdateDto? = null,
+    val nautiljon: ProviderConfigUpdateDto? = null,
+    val aniList: ProviderConfigUpdateDto? = null,
+    val yenPress: ProviderConfigUpdateDto? = null,
+    val kodansha: ProviderConfigUpdateDto? = null,
+    val viz: ProviderConfigUpdateDto? = null,
+    val bookWalker: ProviderConfigUpdateDto? = null,
 )
 
 @JsonClass(generateAdapter = true)
-class ProviderConfigDto {
+class ProviderConfigUpdateDto {
     @Transient
     private val isSet = mutableMapOf<String, Boolean>()
     fun isSet(prop: String) = isSet.getOrDefault(prop, false)
@@ -103,12 +115,12 @@ class ProviderConfigDto {
 
     var priority: Int? = null
     var enabled: Boolean? = null
-    var seriesMetadata: SeriesMetadataConfigDto? = null
-    var bookMetadata: BookMetadataConfigDto? = null
+    var seriesMetadata: SeriesMetadataConfigUpdateDto? = null
+    var bookMetadata: BookMetadataConfigUpdateDto? = null
 }
 
 @JsonClass(generateAdapter = true)
-class SeriesMetadataConfigDto {
+class SeriesMetadataConfigUpdateDto {
     @Transient
     private val isSet = mutableMapOf<String, Boolean>()
     fun isSet(prop: String) = isSet.getOrDefault(prop, false)
@@ -126,6 +138,7 @@ class SeriesMetadataConfigDto {
     var authors: Boolean? = null
     var releaseDate: Boolean? = null
     var thumbnail: Boolean? = null
+    var links: Boolean? = null
     var books: Boolean? = null
     var useOriginalPublisher: Boolean? = null
 
@@ -135,7 +148,7 @@ class SeriesMetadataConfigDto {
 }
 
 @JsonClass(generateAdapter = true)
-data class BookMetadataConfigDto(
+data class BookMetadataConfigUpdateDto(
     val title: Boolean? = null,
     val summary: Boolean? = null,
     val number: Boolean? = null,

@@ -1,6 +1,7 @@
 package org.snd.mediaserver.komga.model.dto
 
 import com.squareup.moshi.JsonClass
+import org.snd.mediaserver.model.MediaServerAlternativeTitle
 import org.snd.mediaserver.model.MediaServerLibraryId
 import org.snd.mediaserver.model.MediaServerSeries
 import org.snd.mediaserver.model.MediaServerSeriesId
@@ -8,6 +9,7 @@ import org.snd.mediaserver.model.MediaServerSeriesMetadata
 import org.snd.mediaserver.model.MediaServerSeriesSearch
 import org.snd.metadata.model.ReadingDirection.valueOf
 import org.snd.metadata.model.SeriesStatus
+import org.snd.metadata.model.WebLink
 
 @JsonClass(generateAdapter = true)
 data class KomgaSeries(
@@ -30,6 +32,8 @@ data class KomgaSeriesMetadata(
     val status: String,
     val statusLock: Boolean,
     val title: String,
+    val alternateTitles: Collection<KomgaAlternativeTitle>,
+    val alternateTitlesLock: Boolean,
     val titleLock: Boolean,
     val titleSort: String,
     val titleSortLock: Boolean,
@@ -50,6 +54,8 @@ data class KomgaSeriesMetadata(
     val tagsLock: Boolean,
     val totalBookCount: Int?,
     val totalBookCountLock: Boolean,
+    val links: Collection<KomgaWebLink>,
+    val linksLock: Boolean,
 )
 
 fun KomgaSeries.mediaServerSeries(): MediaServerSeries {
@@ -76,6 +82,7 @@ fun KomgaSeriesMetadata.mediaServerSeriesMetadata() = MediaServerSeriesMetadata(
     status = SeriesStatus.valueOf(status),
     title = title,
     titleSort = titleSort,
+    alternativeTitles = alternateTitles.map { (label, title) -> MediaServerAlternativeTitle(label, title) },
     summary = summary,
     readingDirection = readingDirection?.let { valueOf(it) },
     publisher = publisher,
@@ -87,10 +94,12 @@ fun KomgaSeriesMetadata.mediaServerSeriesMetadata() = MediaServerSeriesMetadata(
     totalBookCount = totalBookCount,
     authors = emptyList(), //TODO take authors from book metadata?,
     releaseYear = null, //TODO take from book metadata?,
+    links = links.map { WebLink(it.label, it.url) },
 
     statusLock = statusLock,
     titleLock = titleLock,
     titleSortLock = titleSortLock,
+    alternativeTitlesLock = alternateTitlesLock,
     summaryLock = summaryLock,
     readingDirectionLock = readingDirectionLock,
     publisherLock = publisherLock,
@@ -101,4 +110,5 @@ fun KomgaSeriesMetadata.mediaServerSeriesMetadata() = MediaServerSeriesMetadata(
     totalBookCountLock = totalBookCountLock,
     authorsLock = false,
     releaseYearLock = false,
+    linksLock = linksLock
 )

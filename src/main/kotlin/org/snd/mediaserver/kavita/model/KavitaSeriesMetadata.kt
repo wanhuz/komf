@@ -1,6 +1,7 @@
 package org.snd.mediaserver.kavita.model
 
 import com.squareup.moshi.JsonClass
+import org.snd.mediaserver.model.MediaServerAlternativeTitle
 import org.snd.mediaserver.model.MediaServerAuthor
 import org.snd.mediaserver.model.MediaServerSeriesMetadata
 import org.snd.metadata.model.AuthorRole
@@ -114,6 +115,7 @@ fun KavitaSeriesMetadata.mediaServerSeriesMetadata(series: KavitaSeries): MediaS
         status = status,
         title = series.name,
         titleSort = series.sortName,
+        alternativeTitles = series.localizedName?.let { listOf(MediaServerAlternativeTitle("Localized", it)) } ?: emptyList(),
         summary = summary ?: "",
         readingDirection = null,
         publisher = null,
@@ -125,6 +127,7 @@ fun KavitaSeriesMetadata.mediaServerSeriesMetadata(series: KavitaSeries): MediaS
         totalBookCount = null,
         authors = authors,
         releaseYear = releaseYear,
+        links = emptyList(),
 
         statusLock = publicationStatusLocked,
         titleLock = series.nameLocked,
@@ -138,6 +141,8 @@ fun KavitaSeriesMetadata.mediaServerSeriesMetadata(series: KavitaSeries): MediaS
         tagsLock = tagsLocked,
         totalBookCountLock = false,
         authorsLock = authorsLock,
-        releaseYearLock = releaseYearLocked
+        releaseYearLock = releaseYearLocked,
+        alternativeTitlesLock = series.localizedNameLocked,
+        linksLock = false,
     )
 }
