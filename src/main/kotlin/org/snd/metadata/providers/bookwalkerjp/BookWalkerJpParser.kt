@@ -93,12 +93,13 @@ class BookWalkerJpParser {
     private fun parseSearchResult(result: Element): BookWalkerJpSearchResult {
         val imageUrl = getSearchResultThumbnail(result)
         val titleElement = result.getElementsByClass("m-book-item__title").first()!!
+        val titleLabel = result.getElementsByClass("m-book-item__label").first()?.text() ?: ""
         val resultUrl = titleElement.child(0).attr("href")
 
         return BookWalkerJpSearchResult(
             seriesId = parseSeriesId(resultUrl),
             bookId = parseBookId(resultUrl),
-            seriesName = parseSeriesName(titleElement.text()),
+            seriesName = parseSeriesName(titleElement.text(), titleLabel),
             imageUrl = imageUrl,
         )
     }
@@ -118,8 +119,8 @@ class BookWalkerJpParser {
             .let { BookWalkerJpBookId(URLDecoder.decode(it, "UTF-8")) }
     }
 
-    private fun parseSeriesName(name: String): String {
-        return name.replace("( \\(?Manga\\)?)+$".toRegex(), "")
+    private fun parseSeriesName(name: String, label: String): String {
+        return name.replace(label, "").replace("）|（|【|】|\\)|」|「".toRegex(), "").trim()
     }
 
     private fun getSearchResultThumbnail(result: Element): String? {
@@ -135,7 +136,7 @@ class BookWalkerJpParser {
 
     private fun parseBookNumber(name: String): BookRange? {
         return BookNameParser.getVolumes(name)
-            ?: "(?i)(?<!chapter)([０-９]+|\\s\\d+)".toRegex().findAll(name).lastOrNull()?.value?.let {parseJpnNumtoEngNum(it)}?.toDoubleOrNull()
+            ?: "(?i)(?<!chapter)([０-９]+|(\\s|　)\\d+)".toRegex().findAll(name).lastOrNull()?.value?.let {parseJpnNumtoEngNum(it.trim())}?.toDoubleOrNull()
                 ?.let { BookRange(it, it) }
     }
 
