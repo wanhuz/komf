@@ -126,6 +126,9 @@ metadataProviders:
     bookWalker:
       priority: 80
       enabled: false
+    bookWalkerJp:
+      priority: 90
+      enabled: false
 server:
   port: 8085 #or env:KOMF_SERVER_PORT
 logLevel: INFO #or env:KOMF_LOG_LEVEL
