@@ -27,7 +27,7 @@ Requires Java 17 or higher
 version: "3.7"
 services:
   komf:
-    image: sndxr/komf:latest
+    image: wanhuz/komf:latest
     container_name: komf
     ports:
       - "8085:8085"
