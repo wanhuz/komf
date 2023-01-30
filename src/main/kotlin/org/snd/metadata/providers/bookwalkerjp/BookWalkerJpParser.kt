@@ -136,8 +136,8 @@ class BookWalkerJpParser {
 
     private fun parseBookNumber(name: String): BookRange? {
         return BookNameParser.getVolumes(name)
-            ?: "(?i)(?<!chapter)([０-９]+|(\\s|　)\\d+)".toRegex().findAll(name).lastOrNull()?.value?.let {parseJpnNumtoEngNum(it.trim())}?.toDoubleOrNull()
-                ?.let { BookRange(it, it) }
+            ?: "(?s)(\\d+|[０-９]+)(?!.*(\\d+|[０-９]+))".toRegex().findAll(name).lastOrNull()?.value?.let {parseJpnNumtoEngNum(it.trim())}?.toDoubleOrNull()
+                ?.let { BookRange(it, it) }  //Get last number of string
     }
 
     fun parseJpnNumtoEngNum(str: String):String {
